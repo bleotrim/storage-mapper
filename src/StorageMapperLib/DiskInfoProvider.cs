@@ -53,4 +53,63 @@ public class DiskInfoProvider
             return null;
         }
     }
+
+    public static LsblkResult? TestWithJsonFile(string jsonFile)
+    {
+        if (!File.Exists(jsonFile))
+            throw new FileNotFoundException("File JSON non trovato", jsonFile);
+
+        try
+        {
+            string jsonContent = File.ReadAllText(jsonFile);
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            LsblkResult? result = JsonSerializer.Deserialize<LsblkResult>(jsonContent, options);
+
+            return result;
+
+        }
+        catch (JsonException ex)
+        {
+            Console.Error.WriteLine($"Errore nel parsing del JSON: {ex.Message}");
+            return null;
+        }
+    }
+
+    public static DiskInfo? FindByPartUuid(LsblkResult result, string partUuid)
+    {
+        if (result?.DiskInfo == null || string.IsNullOrWhiteSpace(partUuid))
+            return null;
+
+        foreach (var disk in result.DiskInfo)
+        {
+            var found = FindByPartUuidRecursive(disk, partUuid);
+            if (found != null)
+                return found;
+        }
+
+        return null;
+    }
+
+    private static DiskInfo? FindByPartUuidRecursive(DiskInfo node, string partUuid)
+    {
+        if (string.Equals(node.PartUuid, partUuid, StringComparison.OrdinalIgnoreCase))
+            return node;
+
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                var found = FindByPartUuidRecursive(child, partUuid);
+                if (found != null)
+                    return found;
+            }
+        }
+
+        return null;
+    }
 }
