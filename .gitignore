@@ -1,0 +1,5 @@
+.DS_Store
+src/StorageMapper/bin
+src/StorageMapper/obj
+src/StorageMapperLib/bin
+src/StorageMapperLib/obj
